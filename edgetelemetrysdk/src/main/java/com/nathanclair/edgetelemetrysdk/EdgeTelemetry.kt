@@ -15,15 +15,11 @@ interface EdgeTelemetry {
 
     fun enableActivityTracking(application: Application)
 
+    fun getNetworkInterceptor(): okhttp3.Interceptor
+
     companion object {
         // Will hold implementation instance
         private var instance: EdgeTelemetry? = null
-
-        // Initialize the SDK
-        // Initialize with default config
-        fun initialize(context: Context) {
-            initialize(context, EdgeConfig())
-        }
 
         // Initialize with custom config
         fun initialize(context: Context, config: EdgeConfig) {

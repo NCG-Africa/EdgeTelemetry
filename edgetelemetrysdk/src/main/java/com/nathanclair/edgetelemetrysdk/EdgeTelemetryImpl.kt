@@ -99,9 +99,9 @@ class EdgeTelemetryImpl(
         }
     }
 
-    fun getNetworkInterceptor(): Interceptor {
+    override fun getNetworkInterceptor(): okhttp3.Interceptor {
         if (!networkMonitoringEnabled) {
-            throw IllegalStateException("Network monitoring is not enabled. Call enableNetworkMonitoring(true) first.")
+            enableNetworkMonitoring(true)
         }
         return networkInterceptor
     }
