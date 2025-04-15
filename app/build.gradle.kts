@@ -58,5 +58,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     //edge-telemetry:
-    implementation(libs.edge.telemetry.sdk)
+    //implementation(libs.edge.telemetry.sdk)
 }
