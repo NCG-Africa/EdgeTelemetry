@@ -7,6 +7,7 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
+import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
@@ -21,7 +22,7 @@ class EdgeTelemetryImpl(
     config: EdgeConfig
 ): EdgeTelemetry {
     private var openTelemetry: OpenTelemetry
-    private var networkMonitoringEnabled = false
+    private var networkMonitoringEnabled = true
     private val networkInterceptor: EdgeNetworkInterceptor
     private var activityLifecycleCallbacks: EdgeActivityLifecycleCallbacks? = null
 
@@ -35,9 +36,18 @@ class EdgeTelemetryImpl(
                 ResourceAttributes.SERVICE_VERSION, getAppVersion(context)
             )))
 
-        val spanExporter = OtlpGrpcSpanExporter.builder()
-            .setEndpoint(config.collectorUrl)
-            .build()
+        // Inside EdgeTelemetryImpl initialization
+        val spanExporter = if (config.useHttpProtocol) {
+            // Use HTTP protocol exporter
+            OtlpHttpSpanExporter.builder()
+                .setEndpoint(config.collectorUrl)
+                .build()
+        } else {
+            // Use gRPC protocol exporter
+            OtlpGrpcSpanExporter.builder()
+                .setEndpoint(config.collectorUrl)
+                .build()
+        }
 
         val tracerProvider = SdkTracerProvider.builder()
             .setResource(resource)

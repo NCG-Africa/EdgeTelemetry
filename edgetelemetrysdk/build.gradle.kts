@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.opentelemetry.sdk)
     implementation(libs.opentelemetry.exporter.otlp)
     implementation(libs.opentelemetry.semconv)
+    implementation(libs.opentelemetry.exporter.otlp.http.trace)
 
     //okhttp
     implementation(libs.okhttp)
@@ -67,7 +68,7 @@ afterEvaluate {
 
                 groupId = "com.github.mktowett"
                 artifactId = "edge-telemetry-sdk"
-                version = "0.1.3"
+                version = "0.1.5"
             }
         }
 

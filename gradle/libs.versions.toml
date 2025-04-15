@@ -38,6 +38,8 @@ opentelemetry-api = { group = "io.opentelemetry", name = "opentelemetry-api", ve
 opentelemetry-sdk = { group = "io.opentelemetry", name = "opentelemetry-sdk", version.ref = "opentelemetry" }
 opentelemetry-exporter-otlp = { group = "io.opentelemetry", name = "opentelemetry-exporter-otlp", version.ref = "opentelemetry" }
 opentelemetry-semconv = { group = "io.opentelemetry.semconv", name = "opentelemetry-semconv", version = "1.21.0-alpha" }
+opentelemetry-exporter-otlp-http-trace = { group = "io.opentelemetry", name = "opentelemetry-exporter-otlp-http-trace", version.ref = "opentelemetry" }
+
 
 #Okhttp
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttpVersion" }
