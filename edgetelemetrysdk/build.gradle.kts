@@ -67,7 +67,7 @@ afterEvaluate {
 
                 groupId = "com.github.mktowett"
                 artifactId = "edge-telemetry-sdk"
-                version = "0.1.2"
+                version = "0.1.3"
             }
         }
 
