@@ -13,8 +13,8 @@ class EdgeApp: Application() {
             collectionUrl = "https://0452-105-163-1-229.ngrok-free.app/v1/traces", // Replace with your actual OTLP gRPC endpoint
         ) {
             // Optional configuration
-            serviceName("Edge Sample App")
-            serviceVersion("1.0.0")
+            serviceName("NCG Sample App")
+            serviceVersion("0.5.10-alpha")
             environment("production")
         }
     }
