@@ -48,16 +48,21 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-
-    //Open Telemetry
-    implementation(libs.opentelemetry.api)
-    implementation(libs.opentelemetry.sdk)
-    implementation(libs.opentelemetry.exporter.otlp)
-    implementation(libs.opentelemetry.semconv)
-    implementation(libs.opentelemetry.exporter.otlp.http.trace)
-
     //okhttp
     implementation(libs.okhttp)
+
+    //Open Telemetry
+    implementation(libs.opentelemetry.android.agent)
+    // Additional OpenTelemetry dependencies
+    implementation("io.opentelemetry:opentelemetry-api:1.35.0")
+    implementation("io.opentelemetry:opentelemetry-sdk:1.35.0")
+    implementation("io.opentelemetry:opentelemetry-sdk-trace:1.35.0")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.35.0")
+    implementation("io.opentelemetry.proto:opentelemetry-proto:1.1.0-alpha")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:1.35.0")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.35.0")
+    implementation("io.opentelemetry.proto:opentelemetry-proto:1.1.0-alpha")
+
 }
 
 afterEvaluate {
