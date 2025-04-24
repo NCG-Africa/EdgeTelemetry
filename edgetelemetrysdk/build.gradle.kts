@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.bytebuddy)
     id("maven-publish")
 }
 
@@ -62,6 +63,10 @@ dependencies {
     implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:1.35.0")
     implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.35.0")
     implementation("io.opentelemetry.proto:opentelemetry-proto:1.1.0-alpha")
+    implementation("io.opentelemetry.android.instrumentation:sessions:0.11.0-alpha")
+    implementation("io.opentelemetry:opentelemetry-api-incubator:1.31.0-alpha")
+    implementation("io.opentelemetry.android.instrumentation:okhttp3-library:0.11.0-alpha")
+    byteBuddy("io.opentelemetry.android.instrumentation:okhttp3-agent:0.11.0-alpha")
 
 }
 

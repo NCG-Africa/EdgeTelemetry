@@ -18,8 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.nathanclair.edgetelemetry.ui.theme.EdgeTelemetryTheme
-import com.nathanclair.edgetelemetrysdk.core.EdgeTelemetry
-import com.nathanclair.edgetelemetrysdk.core.EdgeTelemetry.Companion.openTelemetryRum
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
