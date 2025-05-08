@@ -24,17 +24,12 @@ class NetworkPerformanceMonitor(private val openTelemetry: OpenTelemetry) {
     private val apiPerformanceTracker = mutableMapOf<String, ApiPerformanceStats>()
 
     // Track threshold for slow network requests (in milliseconds)
-    private var slowRequestThreshold = 1500L
+    var slowRequestThreshold = 1500L
+        set(value) {
+            field = value
+            Log.d(TAG, "Slow request threshold set to $value ms")
+        }
     val connectionQualityManager = ConnectionQualityManager()
-
-    /**
-     * Set the threshold for what is considered a slow network request.
-     *
-     * @param thresholdMs Time in milliseconds
-     */
-    fun setSlowRequestThreshold(thresholdMs: Long) {
-        slowRequestThreshold = thresholdMs
-    }
 
     /**
      * Record detailed metrics for a network request.

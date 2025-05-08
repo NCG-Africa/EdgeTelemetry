@@ -1,6 +1,7 @@
 package com.nathanclair.edgetelemetrysdk
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import io.opentelemetry.android.OpenTelemetryRum
 import io.opentelemetry.android.OpenTelemetryRumBuilder
@@ -25,6 +26,7 @@ import io.opentelemetry.exporter.otlp.http.metrics.OtlpHttpMetricExporter
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
 import io.opentelemetry.instrumentation.library.okhttp.v3_0.OkHttpInstrumentation
 import io.opentelemetry.sdk.logs.export.SimpleLogRecordProcessor
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import java.io.File
 
 private const val TAG = "EdgeTelemetry"
@@ -128,55 +130,10 @@ class EdgeTelemetry private constructor() {
                 configureOkHttpInstrumentation()
             }
 
-            // Create main buffer directory
-            val mainBufferDir = File(application.cacheDir, "otel-signals")
-            if (!mainBufferDir.exists()) {
-                val dirCreated = mainBufferDir.mkdirs()
-                Log.d(TAG, "Main buffer directory created: $dirCreated at path: ${mainBufferDir.absolutePath}")
-            }
-
-            // Create subdirectories for each signal type
-            val spansDir = File(mainBufferDir, "spans")
-            val metricsDir = File(mainBufferDir, "metrics")
-            val logsDir = File(mainBufferDir, "logs")
-            val tempDir = File(mainBufferDir, "temp")
-
-            for (dir in listOf(spansDir, metricsDir, logsDir, tempDir)) {
-                if (!dir.exists()) {
-                    val created = dir.mkdirs()
-                    Log.d(TAG, "Created directory ${dir.name}: $created")
-                }
-            }
-
-            // Make sure we have write permissions
-            val testFile = File(mainBufferDir, "test.txt")
-            try {
-                if (testFile.createNewFile()) {
-                    testFile.writeText("Test writing to buffer directory")
-                    testFile.delete()
-                    Log.d(TAG, "Write test to buffer directory succeeded")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed write test to buffer directory", e)
-            }
-
             // Create DiskBufferingConfig with more relaxed timing parameters
             val diskBufferingConfig = DiskBufferingConfig.create(
-                enabled = config.diskBuffering.enabled,
-                maxCacheSize = config.diskBuffering.maxCacheSize,
-                maxFileAgeForWriteMillis = 5_000,  // 5 seconds (shorter)
-                minFileAgeForReadMillis = 7_000,   // 7 seconds (shorter)
-                maxFileAgeForReadMillis = 24 * 60 * 60 * 1000, // 24 hours (longer)
-                maxCacheFileSize = 1024 * 1024,    // 1MB
-                signalsBufferDir = mainBufferDir,
-                debugEnabled = true  // Always enable debugging for now
+                enabled = false
             )
-
-            Log.d(TAG, "Configured disk buffering with parameters: " +
-                    "enabled=${diskBufferingConfig.enabled}, " +
-                    "maxCacheSize=${diskBufferingConfig.maxCacheSize}, " +
-                    "maxFileAgeForWrite=${diskBufferingConfig.maxFileAgeForWriteMillis}ms, " +
-                    "minFileAgeForRead=${diskBufferingConfig.minFileAgeForReadMillis}ms")
 
             // Configure OpenTelemetry with settings from config
             val otelConfig = OtelRumConfig()
@@ -226,7 +183,6 @@ class EdgeTelemetry private constructor() {
                 openTelemetryRum?.openTelemetry?.let { otel ->
                     networkPerformanceMonitor = NetworkPerformanceMonitor(otel)
                         .apply {
-                            setSlowRequestThreshold(config.slowRequestThresholdMs)
                             connectionQualityManager.initialize(application)
                         }
                     Log.d(TAG, "Network performance monitoring initialized")
@@ -665,5 +621,174 @@ class EdgeTelemetry private constructor() {
             // Return the original exception if we encountered an error
             return RuntimeException("Failed to simulate crash: ${e.message}", e)
         }
+    }
+
+
+    /**
+     * Simulates a network request for testing network monitoring functionality.
+     * This helps visualize what data would be captured by automatic network instrumentation.
+     *
+     * @param url The URL to simulate calling (default: "https://api.example.com/test")
+     * @param method The HTTP method to simulate (default: "GET")
+     * @param statusCode The HTTP status code to simulate (default: 200)
+     * @param durationMs How long the simulated request should take (default: random between 100-2000ms)
+     * @param responseSizeBytes Size of the simulated response (default: random between 1KB-1MB)
+     * @param requestSizeBytes Size of the simulated request (default: random between 100B-10KB)
+     * @param apiName Optional name to group requests by API (default: "test-api")
+     * @param simulateLatency If true, actually waits for the duration to simulate latency (default: false)
+     * @param includeConnectionQuality If true, includes current network connection quality (default: true)
+     * @return A Map containing details about the simulated request and collected telemetry
+     */
+    fun simulateNetworkRequest(
+        url: String = "https://api.example.com/test",
+        method: String = "GET",
+        statusCode: Int = 200,
+        durationMs: Long = (100..2000).random().toLong(),
+        responseSizeBytes: Long = (1024..(1024*1024)).random().toLong(),
+        requestSizeBytes: Long = (100..(10*1024)).random().toLong(),
+        apiName: String = "test-api",
+        simulateLatency: Boolean = false,
+        includeConnectionQuality: Boolean = true
+    ): Map<String, Any> {
+        Log.i(TAG, "Simulating network request to $url with method $method")
+
+        val startTimeMs = System.currentTimeMillis()
+
+        // If simulateLatency is true, sleep for the duration to mimic network latency
+        if (simulateLatency && durationMs > 0) {
+            try {
+                Thread.sleep(durationMs)
+            } catch (e: InterruptedException) {
+                Log.w(TAG, "Sleep interrupted during network simulation", e)
+            }
+        }
+
+        val endTimeMs = if (simulateLatency) System.currentTimeMillis() else startTimeMs + durationMs
+
+        // Use our NetworkPerformanceMonitor to record the network metrics
+        // This will create the appropriate spans and update API performance stats
+        networkPerformanceMonitor?.recordNetworkMetrics(
+            url = url,
+            method = method,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            bytesSent = requestSizeBytes,
+            bytesReceived = responseSizeBytes,
+            statusCode = statusCode,
+            apiName = apiName
+        )
+
+        // Also manually track the request with our standard tracking method
+        // This ensures both tracking systems receive the data
+        trackNetworkRequest(
+            url = url,
+            method = method,
+            durationMs = durationMs,
+            requestSizeBytes = requestSizeBytes,
+            responseSizeBytes = responseSizeBytes,
+            statusCode = statusCode,
+            apiName = apiName
+        )
+
+        // Collect data about what was recorded for the simulation summary
+        val host = try {
+            Uri.parse(url).host ?: "unknown"
+        } catch (e: Exception) {
+            "unknown"
+        }
+
+        val path = try {
+            Uri.parse(url).path ?: "/"
+        } catch (e: Exception) {
+            "/"
+        }
+
+        // Get connection quality data if requested and available
+        val connectionQuality = if (includeConnectionQuality) {
+            networkPerformanceMonitor?.getCurrentConnectionQuality()
+        } else null
+
+        // Get the API performance stats after this request
+        val apiStats = if (apiName != null) {
+            networkPerformanceMonitor?.getApiPerformanceStats(apiName)
+        } else null
+
+        // Build a simulation summary with the data that would be sent to the backend
+        val simulationSummary = mutableMapOf<String, Any>(
+            "request" to mapOf(
+                "url" to url,
+                "method" to method,
+                "host" to host,
+                "path" to path,
+                "startTimeMs" to startTimeMs,
+                "endTimeMs" to endTimeMs,
+                "durationMs" to durationMs,
+                "requestSizeBytes" to requestSizeBytes,
+                "responseSizeBytes" to responseSizeBytes,
+                "statusCode" to statusCode,
+                "apiName" to (apiName ?: "unknown"),
+                "isSlowRequest" to (durationMs > (networkPerformanceMonitor?.slowRequestThreshold ?: 1500))
+            )
+        )
+
+        // Include connection quality if available
+        connectionQuality?.let {
+            simulationSummary["connectionQuality"] = mapOf(
+                "type" to it.connectionType,
+                "signalStrength" to it.signalStrength
+            )
+        }
+
+        // Include API stats if available
+        apiStats?.let {
+            simulationSummary["apiStats"] = mapOf(
+                "apiName" to it.apiName,
+                "requestCount" to it.requestCount,
+                "successCount" to it.successCount,
+                "failureCount" to it.failureCount,
+                "totalDurationMs" to it.totalDurationMs,
+                "minDurationMs" to it.minDurationMs,
+                "maxDurationMs" to it.maxDurationMs,
+                "avgDurationMs" to it.getAverageDurationMs(),
+                "successRate" to it.getSuccessRate()
+            )
+        }
+
+        // Include telemetry attributes that would be in the OpenTelemetry span
+        val telemetryAttributes = mutableMapOf(
+            "http.url" to url,
+            "http.method" to method,
+            "http.status_code" to statusCode,
+            "network.duration_ms" to durationMs,
+            "network.bytes_sent" to requestSizeBytes,
+            "network.bytes_received" to responseSizeBytes,
+            "network.host" to host,
+            "network.path" to path,
+            "simulated" to true
+        )
+
+        // Add slow request flag if applicable
+        if (durationMs > (networkPerformanceMonitor?.slowRequestThreshold ?: 1500)) {
+            telemetryAttributes["network.slow_request"] = true
+            telemetryAttributes["network.slow_threshold_ms"] = networkPerformanceMonitor?.slowRequestThreshold ?: 1500
+        }
+
+        // Add connection quality if available
+        connectionQuality?.let {
+            telemetryAttributes["network.connection_type"] = it.connectionType
+            telemetryAttributes["network.signal_strength"] = it.signalStrength
+        }
+
+        // Add API name if available
+        apiName?.let {
+            telemetryAttributes["api.name"] = it
+        }
+
+        simulationSummary["telemetryAttributes"] = telemetryAttributes
+
+        // Log a detailed summary of what would be sent to the backend
+        Log.d(TAG, "Network simulation complete. Data that would be sent to backend: $simulationSummary")
+
+        return simulationSummary
     }
 }
