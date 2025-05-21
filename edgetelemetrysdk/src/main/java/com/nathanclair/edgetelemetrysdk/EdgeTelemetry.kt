@@ -31,7 +31,7 @@ import java.io.File
 
 private const val TAG = "EdgeTelemetry"
 
-class EdgeTelemetry private constructor() {
+class  EdgeTelemetry private constructor() {
 
     private var openTelemetryRum: OpenTelemetryRum? = null
     private var networkPerformanceMonitor: NetworkPerformanceMonitor? = null
@@ -124,6 +124,8 @@ class EdgeTelemetry private constructor() {
     fun initialize(application: Application, config: EdgeTelemetryConfig): EdgeTelemetry {
         Log.i(TAG, "Initializing EdgeTelemetry with custom configuration")
 
+        // Logging button clicks
+        Log.d("ClickLogger", "Logger initialized")
         try {
             // Configure HTTP instrumentation if enabled
             if (InstrumentationType.HTTP in config.enabledInstrumentations) {
@@ -146,6 +148,7 @@ class EdgeTelemetry private constructor() {
                     OtlpHttpSpanExporter.builder()
                         .setEndpoint(config.tracesEndpoint)
                         .build()
+                    LoggingSpanExporter()
                 }
                 .addLogRecordExporterCustomizer {
                     OtlpHttpLogRecordExporter.builder()
