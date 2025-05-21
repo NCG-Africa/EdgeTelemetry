@@ -57,6 +57,14 @@ class MainActivity : ComponentActivity() {
                         }) {
                             Text(text = "Network Button")
                         }
+
+                        Spacer(modifier = Modifier.padding(16.dp))
+
+                        Button(onClick = {
+                           Toast.makeText(this@MainActivity, "Button clicked", Toast.LENGTH_SHORT).show()
+                        }) {
+                            Text(text = "Custom Button")
+                        }
                     }
                 }
             }

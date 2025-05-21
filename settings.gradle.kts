@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "EdgeTelemetry"
 include(":app")
 include(":edgetelemetrysdk")
+include(":click-logger-plugin")

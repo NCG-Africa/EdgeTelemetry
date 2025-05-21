@@ -22,7 +22,6 @@ enum class InstrumentationType {
 /**
  * Configuration options for EdgeTelemetry SDK.
  */
-
 data class EdgeTelemetryConfig(
     val tracesEndpoint: String = "http://localhost:4318/v1/traces",
     val logsEndpoint: String = "http://localhost:4318/v1/logs",
