@@ -78,7 +78,7 @@ afterEvaluate {
 
                 groupId = "com.github.NCG-Africa"
                 artifactId = "edge-telemetry-sdk"
-                version = "0.2.9"
+                version = "0.2.10"
             }
         }
 
