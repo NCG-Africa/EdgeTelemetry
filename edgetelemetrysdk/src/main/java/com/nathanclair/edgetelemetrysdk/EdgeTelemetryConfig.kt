@@ -117,7 +117,9 @@ data class EdgeTelemetryConfig(
     }
 
     companion object {
+        @JvmStatic
         fun builder(): Builder = Builder()
+
     }
 }
 
